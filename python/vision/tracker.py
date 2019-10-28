@@ -8,15 +8,16 @@ import time
 import imutils
 
 def main():
+
     # the lower HSV range to threshold
-    lowerRange = (10, 100, 100)
+    lower_range = (10, 100, 100)
     # the upper HSV range to threshold
-    upperRange = (25, 255, 255)
+    upper_range = (25, 255, 255)
 
     # centimetres
-    objectRadius = 4
+    object_radius = 4
     # guess, likely not accurate
-    focalLength = 300
+    focal_length = 300
     # this font is used to write the distance to the frame
     font = cv2.FONT_HERSHEY_PLAIN
     
@@ -48,7 +49,7 @@ def main():
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
         # threshold based on the low and high HSV range to threshold
-        mask = cv2.inRange(hsv, lowerRange, upperRange)
+        mask = cv2.inRange(hsv, lower_range, upper_range)
         # erode then dilate to remove noise
         mask = cv2.erode(mask, None, iterations=3)
         mask = cv2.dilate(mask, None, iterations=3)
@@ -63,13 +64,13 @@ def main():
 
         if len(contours) > 0:
             # get the most optimal contour based on size and solidity
-            largestContour = max(contours, key=lambda c: cv2.contourArea(c) * safeDivide(cv2.contourArea(c),
+            largest_contour = max(contours, key=lambda c: cv2.contourArea(c) * safe_divide(cv2.contourArea(c),
             cv2.contourArea(cv2.convexHull(c))) ** 2)
 
-            ((x, y), radius) = cv2.minEnclosingCircle(largestContour)
+            ((x, y), radius) = cv2.minEnclosingCircle(largest_contour)
             
             # get the contour moments and calculate the centre of the circle
-            moments = cv2.moments(largestContour)
+            moments = cv2.moments(largest_contour)
             try:
                 centre = (int(moments["m10"] / moments["m00"]), int(moments["m01"] / moments["m00"]))
             except ZeroDivisionError:
@@ -82,7 +83,7 @@ def main():
                 cv2.circle(frame, centre, 5, (0, 0, 255), -1)
                 
                 # calculate the distance based on focal length
-                distance = ((objectRadius * focalLength) / radius)
+                distance = ((object_radius * focal_length) / radius)
                 cv2.putText(frame, "{0:.2f}".format(distance) + ' cm', (30, 30), font, 2, (0, 0, 255), 2, cv2.LINE_AA)
 
         cv2.imshow("mask", mask)
@@ -97,7 +98,7 @@ def main():
     vs.stop()
     cv2.destroyAllWindows()
 
-def safeDivide(n, d):
+def safe_divide(n, d):
     return n / d if d else 0
 
 if __name__ == "__main__":
