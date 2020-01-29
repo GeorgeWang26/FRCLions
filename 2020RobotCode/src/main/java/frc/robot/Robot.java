@@ -4,6 +4,10 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Solenoid;
+import static edu.wpi.first.wpilibj.DoubleSolenoid.Value.*;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -29,7 +33,7 @@ public class Robot extends TimedRobot {
   // 40 or 70, init at 40
   int limelightAngle = 40;
 
-  Joystick joystick;
+  Joystick joystick = new Joystick(0);
   double x;
   double y;
 
@@ -45,53 +49,53 @@ public class Robot extends TimedRobot {
   boolean button11;
   boolean button12;
 
+  TalonSRX leftFront = new TalonSRX(0);
+  TalonSRX leftBack = new TalonSRX(1);
+  TalonSRX rightFront = new TalonSRX(2);
+  TalonSRX rightBack = new TalonSRX(3);
 
-  TalonSRX leftFront;
-  TalonSRX leftBack;
-  TalonSRX rightFront;
-  TalonSRX rightBack;
+  CANSparkMax shooterLeft = new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless);
+  CANSparkMax shooterRight = new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless);
 
-  CANSparkMax shooterLeft;
-  CANSparkMax shooterRight;
+  // pneumatics 
+  Compressor compress = new Compressor(0);
+  // Solenoid intake = new Solenoid(0);
+  // 1 forward 2 reverse
+  DoubleSolenoid intakeDouble = new DoubleSolenoid(0,1);
 
-  NetworkTable table;
-  NetworkTableEntry tx;
-  NetworkTableEntry ty;
-  NetworkTableEntry ta;
+  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  NetworkTableEntry tx = table.getEntry("tx");
+  NetworkTableEntry ty = table.getEntry("ty");
+  NetworkTableEntry ta = table.getEntry("ta");
 
   double xAng;
   double yAng;
   double area;
 
 
+
   @Override
   public void robotInit() {
     System.out.println("init");
-    joystick = new Joystick(0);
 
-    leftFront = new TalonSRX(0);
-    leftBack = new TalonSRX(1);
-    rightFront = new TalonSRX(2);
-    rightBack = new TalonSRX(3);
+    // c.setClosedLoopControl(true);
+    // c.setClosedLoopControl(false);
+    
+    boolean enabled = compress.enabled();
+    boolean pressureSwitch = compress.getPressureSwitchValue();
+    double current = compress.getCompressorCurrent();
 
-    shooterLeft = new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless);
-    shooterRight = new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless);
-
-    table = NetworkTableInstance.getDefault().getTable("limelight");
-    tx = table.getEntry("tx");
-    ty = table.getEntry("ty");
-    ta = table.getEntry("ta");
-  
+    System.out.println("enable " + enabled + " pressureSwitch " + pressureSwitch + " current " + current);
     // pid values config here
   }
 
-  // @Override
-  // public void robotPeriodic() {
-  // }
+  @Override
+  public void robotPeriodic() {
+  }
 
   @Override
   public void autonomousInit() {
-    System.out.println("suto start");
+    System.out.println("auto init");
     // frontTwoSec();
 
   }
@@ -143,6 +147,20 @@ public class Robot extends TimedRobot {
       shooterRight.set(0);
     }
 
+    // if(button2) {
+    //   intake.set(true);
+    // }else{
+    //   intake.set(false);
+    // }
+
+    if(button3) {
+      intakeDouble.set(kForward);
+    }else if(button4) {
+      intakeDouble.set(kReverse);
+    }else {
+      intakeDouble.set(kOff);
+    }
+
   }
 
   public void autoLoop() {
@@ -172,26 +190,5 @@ public class Robot extends TimedRobot {
     System.out.println(d);
     return d;
   }
-
-  // public void frontTwoSec(){
-  //   leftFront.set(ControlMode.PercentOutput, 1);
-  //   leftBack.set(ControlMode.PercentOutput, 1);
-  //   rightFront.set(ControlMode.PercentOutput, 1);
-  //   rightBack.set(ControlMode.PercentOutput, 1);
-  //   Timer timer = new Timer();
-  //   TimerTask forwardTwoSec = new TimerTask(){
-    
-  //     @Override
-  //     public void run() {
-  //       leftFront.set(ControlMode.PercentOutput, 0);
-  //       leftBack.set(ControlMode.PercentOutput, 0);
-  //       rightFront.set(ControlMode.PercentOutput, 0);
-  //       rightBack.set(ControlMode.PercentOutput, 0);
-  //       // might be problem here
-  //       timer.cancel();
-  //     }
-  //   };
-  //   timer.schedule(forwardTwoSec, 0, 2000);
-  // }
 
 }
