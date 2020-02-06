@@ -7,18 +7,21 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Solenoid;
-import static edu.wpi.first.wpilibj.DoubleSolenoid.Value.*;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value.*;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.Hand;;
 
 public class Robot extends TimedRobot {
 
@@ -34,8 +37,11 @@ public class Robot extends TimedRobot {
   int limelightAngle = 40;
 
   Joystick joystick = new Joystick(0);
+  XboxController xbox = new XboxController(1);
   double x;
   double y;
+
+  double speed = 0.5;
 
   boolean button1;
   boolean button2;
@@ -49,19 +55,18 @@ public class Robot extends TimedRobot {
   boolean button11;
   boolean button12;
 
-  TalonSRX leftFront = new TalonSRX(0);
-  TalonSRX leftBack = new TalonSRX(1);
-  TalonSRX rightFront = new TalonSRX(2);
-  TalonSRX rightBack = new TalonSRX(3);
+  TalonFX leftFront = new TalonFX(1);
+  // TalonFX leftBack = new TalonFX(2);
+  // TalonFX rightFront = new TalonFX(3);
+  // TalonFX rightBack = new TalonFX(4);
 
-  CANSparkMax shooterLeft = new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless);
-  CANSparkMax shooterRight = new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless);
+  CANSparkMax shooterLeft = new CANSparkMax(12, CANSparkMaxLowLevel.MotorType.kBrushed);
+  CANSparkMax shooterRight = new CANSparkMax(13, CANSparkMaxLowLevel.MotorType.kBrushed);
+
 
   // pneumatics 
-  Compressor compress = new Compressor(0);
-  // Solenoid intake = new Solenoid(0);
-  // 1 forward 2 reverse
-  DoubleSolenoid intakeDouble = new DoubleSolenoid(0,1);
+  // Compressor compress = new Compressor(0);
+  // DoubleSolenoid intakeDouble = new DoubleSolenoid(0,1);
 
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
@@ -81,12 +86,12 @@ public class Robot extends TimedRobot {
     // c.setClosedLoopControl(true);
     // c.setClosedLoopControl(false);
     
-    boolean enabled = compress.enabled();
-    boolean pressureSwitch = compress.getPressureSwitchValue();
-    double current = compress.getCompressorCurrent();
+    // boolean enabled = compress.enabled();
+    // boolean pressureSwitch = compress.getPressureSwitchValue();
+    // double current = compress.getCompressorCurrent();
 
-    System.out.println("enable " + enabled + " pressureSwitch " + pressureSwitch + " current " + current);
-    // pid values config here
+
+  //  System.out.println("enable " + enabled + " pressureSwitch " + pressureSwitch + " current " + current);
   }
 
   @Override
@@ -96,13 +101,14 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     System.out.println("auto init");
-    // frontTwoSec();
 
   }
 
   public void driveLoop() {
-    x = joystick.getX();
-    y = -joystick.getY();
+    // x = joystick.getX();
+    // y = -joystick.getY();
+    x = xbox.getX(Hand.kLeft);
+    y = -xbox.getY(Hand.kLeft);
 
     button1 = joystick.getRawButton(1);
     button2 = joystick.getRawButton(2);
@@ -122,44 +128,46 @@ public class Robot extends TimedRobot {
     area = ta.getDouble(0.0);
 
     // System.out.println("x angle: " + xAng + "  y angle: " + ty + "  area: " + area);
-    double leftTotal = x + y;
-    double rightTotal = -x-y;
 
-    System.out.println("left   x " + x + "     y " + y + "    total " + leftTotal);
-    leftFront.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, y);
-    leftBack.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, y);
-    System.out.println("right  x " + -x + "    y " + -y + "     total " + rightTotal);
-    rightFront.set(ControlMode.PercentOutput, -x, DemandType.ArbitraryFeedForward, -y);
-    rightBack.set(ControlMode.PercentOutput, -x, DemandType.ArbitraryFeedForward, -y);
-
+    // double leftTotal = x + y;
+    // double rightTotal = -x-y;
     // leftFront.set(ControlMode.PercentOutput, leftTotal);
     // leftBack.set(ControlMode.PercentOutput, leftTotal);
     // rightFront.set(ControlMode.PercentOutput, rightTotal);
     // rightBack.set(ControlMode.PercentOutput, rightTotal);
 
+    leftFront.set(ControlMode.PercentOutput, y, DemandType.ArbitraryFeedForward, x);
+    // leftBack.set(ControlMode.PercentOutput, y, DemandType.ArbitraryFeedForward, x);
+    // rightFront.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, -x);
+    // rightBack.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, -x);
+
+    System.out.println(x + " " + y);
+
+
+
+    //Spin Forward
     if(button1) {
       System.out.println("pressed to shoot");
-      shooterLeft.set(1);
-      shooterRight.set(-1);
+      System.out.println("\n\n\n\n\n");
+      shooterLeft.set(-1);
+      shooterRight.set(1);
+      System.out.println("end");
     }else{
       System.out.println("stop shooting");
       shooterLeft.set(0);
       shooterRight.set(0);
     }
 
-    // if(button2) {
-    //   intake.set(true);
-    // }else{
-    //   intake.set(false);
-    // }
 
-    if(button3) {
-      intakeDouble.set(kForward);
-    }else if(button4) {
-      intakeDouble.set(kReverse);
-    }else {
-      intakeDouble.set(kOff);
-    }
+  //  if(button3) {
+  //     // shoot out
+  //     intakeDouble.set(kReverse);
+  //   }else if(button4) {
+  //     // take it back
+  //     intakeDouble.set(kForward);
+  //   }else {
+  //     intakeDouble.set(kOff);
+  //   }
 
   }
 
