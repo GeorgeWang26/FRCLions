@@ -56,9 +56,9 @@ public class Robot extends TimedRobot {
   boolean button12;
 
   TalonFX leftFront = new TalonFX(1);
-  // TalonFX leftBack = new TalonFX(2);
-  // TalonFX rightFront = new TalonFX(3);
-  // TalonFX rightBack = new TalonFX(4);
+  TalonFX leftBack = new TalonFX(2);
+  TalonFX rightFront = new TalonFX(3);
+  TalonFX rightBack = new TalonFX(4);
 
   CANSparkMax shooterLeft = new CANSparkMax(12, CANSparkMaxLowLevel.MotorType.kBrushed);
   CANSparkMax shooterRight = new CANSparkMax(13, CANSparkMaxLowLevel.MotorType.kBrushed);
@@ -173,6 +173,46 @@ public class Robot extends TimedRobot {
 
   public void autoLoop() {
     // autonomous loop
+    xAng = tx.getDouble(0.0);
+    area = ta.getDouble(0.0);
+    
+    while(xAng != 0) {
+      if(xAng > 0) {
+        //turn right
+        leftFront.set(ControlMode.PercentOutput, 0.2);
+        leftBack.set(ControlMode.PercentOutput, 0.2);
+        rightFront.set(ControlMode.PercentOutput, 0.2);
+        rightBack.set(ControlMode.PercentOutput, 0.2);
+      } else if (xAng < 0) {
+        //turn left
+        leftFront.set(ControlMode.PercentOutput, -0.2);
+        leftBack.set(ControlMode.PercentOutput, -0.2);
+        rightFront.set(ControlMode.PercentOutput, -0.2);
+        rightBack.set(ControlMode.PercentOutput, -0.2);
+      }
+      xAng = tx.getDouble(0.0);
+    }
+
+    yAng = ty.getDouble(0.0);
+    while(yAng != 0) {
+      if(yAng > 0) {
+        //move back
+        leftFront.set(ControlMode.PercentOutput, -0.2);
+        leftBack.set(ControlMode.PercentOutput, -0.2);
+        rightFront.set(ControlMode.PercentOutput, 0.2);
+        rightBack.set(ControlMode.PercentOutput, 0.2);
+      } else if (yAng < 0) {
+        //move forwards
+        leftFront.set(ControlMode.PercentOutput, 0.2);
+        leftBack.set(ControlMode.PercentOutput, 0.2);
+        rightFront.set(ControlMode.PercentOutput, -0.2);
+        rightBack.set(ControlMode.PercentOutput, -0.2);
+      }
+      yAng = ty.getDouble(0.0);
+    }
+    
+    shooterLeft.set(-1);
+    shooterRight.set(1);
   }
 
   @Override
@@ -198,5 +238,6 @@ public class Robot extends TimedRobot {
     System.out.println(d);
     return d;
   }
+
 
 }
