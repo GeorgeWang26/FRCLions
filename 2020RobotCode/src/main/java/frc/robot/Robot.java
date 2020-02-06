@@ -239,8 +239,5 @@ public class Robot extends TimedRobot {
     return d;
   }
 
-  public void shoot() {
-
-  }
 
 }
