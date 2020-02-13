@@ -7,7 +7,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Solenoid;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value.*;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.cameraserver.CameraServer;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -21,7 +22,11 @@ import com.revrobotics.CANSparkMaxLowLevel;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.GenericHID.Hand;;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
+
+
+
+
 
 public class Robot extends TimedRobot {
 
@@ -41,7 +46,6 @@ public class Robot extends TimedRobot {
   double x;
   double y;
 
-  double speed = 0.5;
 
   boolean button1;
   boolean button2;
@@ -65,8 +69,8 @@ public class Robot extends TimedRobot {
 
 
   // pneumatics 
-  // Compressor compress = new Compressor(0);
-  // DoubleSolenoid intakeDouble = new DoubleSolenoid(0,1);
+  Compressor compress = new Compressor(0);
+  DoubleSolenoid intakeDouble = new DoubleSolenoid(0,1);
 
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
@@ -77,11 +81,12 @@ public class Robot extends TimedRobot {
   double yAng;
   double area;
 
-
+  CameraServer camServer = CameraServer.getInstance();
 
   @Override
   public void robotInit() {
     System.out.println("init");
+    camServer.startAutomaticCapture(0);
 
     // c.setClosedLoopControl(true);
     // c.setClosedLoopControl(false);
@@ -107,8 +112,16 @@ public class Robot extends TimedRobot {
   public void driveLoop() {
     // x = joystick.getX();
     // y = -joystick.getY();
-    x = xbox.getX(Hand.kLeft);
-    y = -xbox.getY(Hand.kLeft);
+
+
+    // x = xbox.getX(Hand.kLeft);
+    // y = -xbox.getY(Hand.kLeft);
+
+    x = -xbox.getY(Hand.kLeft);
+    y = -xbox.getY(Hand.kRight);
+
+    x *= 0.60;
+    y *= 0.60;
 
     button1 = joystick.getRawButton(1);
     button2 = joystick.getRawButton(2);
@@ -131,26 +144,26 @@ public class Robot extends TimedRobot {
 
     // double leftTotal = x + y;
     // double rightTotal = -x-y;
-    // leftFront.set(ControlMode.PercentOutput, leftTotal);
-    // leftBack.set(ControlMode.PercentOutput, leftTotal);
-    // rightFront.set(ControlMode.PercentOutput, rightTotal);
-    // rightBack.set(ControlMode.PercentOutput, rightTotal);
+    leftFront.set(ControlMode.PercentOutput, x);
+    leftBack.set(ControlMode.PercentOutput, x);
+    rightFront.set(ControlMode.PercentOutput, -y);
+    rightBack.set(ControlMode.PercentOutput, -y);
 
-    leftFront.set(ControlMode.PercentOutput, y, DemandType.ArbitraryFeedForward, x);
+    // leftFront.set(ControlMode.PercentOutput, y, DemandType.ArbitraryFeedForward, x);
     // leftBack.set(ControlMode.PercentOutput, y, DemandType.ArbitraryFeedForward, x);
-    // rightFront.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, -x);
-    // rightBack.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, -x);
+    // rightFront.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, x);
+    // rightBack.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, x);
 
-    System.out.println(x + " " + y);
+    System.out.println(x + "                           " + y);
 
 
 
-    //Spin Forward
+    // shooter
     if(button1) {
       System.out.println("pressed to shoot");
       System.out.println("\n\n\n\n\n");
-      shooterLeft.set(-1);
-      shooterRight.set(1);
+      shooterLeft.set(1);
+      shooterRight.set(-1);
       System.out.println("end");
     }else{
       System.out.println("stop shooting");
@@ -158,16 +171,16 @@ public class Robot extends TimedRobot {
       shooterRight.set(0);
     }
 
-
-  //  if(button3) {
-  //     // shoot out
-  //     intakeDouble.set(kReverse);
-  //   }else if(button4) {
-  //     // take it back
-  //     intakeDouble.set(kForward);
-  //   }else {
-  //     intakeDouble.set(kOff);
-  //   }
+    //pneumatics
+   if(button3) {
+      // shoot out
+      intakeDouble.set(Value.kReverse);
+    }else if(button4) {
+      // take it back
+      intakeDouble.set(Value.kForward);
+    }else {
+      intakeDouble.set(Value.kOff);
+    }
 
   }
 
