@@ -41,6 +41,8 @@ public class Robot extends TimedRobot {
   // 40 or 70, init at 40
   int limelightAngle = 40;
 
+  // code above not needed
+
   Joystick joystick = new Joystick(0);
   XboxController xbox = new XboxController(1);
   double x;
@@ -64,9 +66,10 @@ public class Robot extends TimedRobot {
   TalonFX rightFront = new TalonFX(3);
   TalonFX rightBack = new TalonFX(4);
 
-  CANSparkMax shooterLeft = new CANSparkMax(12, CANSparkMaxLowLevel.MotorType.kBrushed);
-  CANSparkMax shooterRight = new CANSparkMax(13, CANSparkMaxLowLevel.MotorType.kBrushed);
+  CANSparkMax elevator = new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless);
 
+  CANSparkMax shooterLeft = new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless);
+  CANSparkMax shooterRight = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless);
 
   // pneumatics 
   Compressor compress = new Compressor(0);
@@ -87,20 +90,11 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     System.out.println("init");
     camServer.startAutomaticCapture(0);
-
-    // c.setClosedLoopControl(true);
-    // c.setClosedLoopControl(false);
-    
-    // boolean enabled = compress.enabled();
-    // boolean pressureSwitch = compress.getPressureSwitchValue();
-    // double current = compress.getCompressorCurrent();
-
-
-  //  System.out.println("enable " + enabled + " pressureSwitch " + pressureSwitch + " current " + current);
   }
 
   @Override
   public void robotPeriodic() {
+    // not needed right now
   }
 
   @Override
@@ -110,84 +104,16 @@ public class Robot extends TimedRobot {
   }
 
   public void driveLoop() {
-    // x = joystick.getX();
-    // y = -joystick.getY();
-
-
-    // x = xbox.getX(Hand.kLeft);
-    // y = -xbox.getY(Hand.kLeft);
-
-    x = -xbox.getY(Hand.kLeft);
-    y = -xbox.getY(Hand.kRight);
-
-    x *= 0.60;
-    y *= 0.60;
-
-    button1 = joystick.getRawButton(1);
-    button2 = joystick.getRawButton(2);
-    button3 = joystick.getRawButton(3);
-    button4 = joystick.getRawButton(4);
-    button5 = joystick.getRawButton(5);
-    button6 = joystick.getRawButton(6);
-    button7 = joystick.getRawButton(7);
-    button8 = joystick.getRawButton(8);
-    button10 = joystick.getRawButton(10);
-    button11 = joystick.getRawButton(11);
-    button12 = joystick.getRawButton(12);
-
-
-    xAng = tx.getDouble(0.0);
-    yAng = ty.getDouble(0.0);
-    area = ta.getDouble(0.0);
-
-    // System.out.println("x angle: " + xAng + "  y angle: " + ty + "  area: " + area);
-
-    // double leftTotal = x + y;
-    // double rightTotal = -x-y;
-    leftFront.set(ControlMode.PercentOutput, x);
-    leftBack.set(ControlMode.PercentOutput, x);
-    rightFront.set(ControlMode.PercentOutput, -y);
-    rightBack.set(ControlMode.PercentOutput, -y);
-
-    // leftFront.set(ControlMode.PercentOutput, y, DemandType.ArbitraryFeedForward, x);
-    // leftBack.set(ControlMode.PercentOutput, y, DemandType.ArbitraryFeedForward, x);
-    // rightFront.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, x);
-    // rightBack.set(ControlMode.PercentOutput, -y, DemandType.ArbitraryFeedForward, x);
-
-    System.out.println(x + "                           " + y);
-
-
-
-    // shooter
-    if(button1) {
-      System.out.println("pressed to shoot");
-      System.out.println("\n\n\n\n\n");
-      shooterLeft.set(1);
-      shooterRight.set(-1);
-      System.out.println("end");
-    }else{
-      System.out.println("stop shooting");
-      shooterLeft.set(0);
-      shooterRight.set(0);
-    }
-
-    //pneumatics
-   if(button3) {
-      // shoot out
-      intakeDouble.set(Value.kReverse);
-    }else if(button4) {
-      // take it back
-      intakeDouble.set(Value.kForward);
-    }else {
-      intakeDouble.set(Value.kOff);
-    }
-
+    initialSettings();
+    drive(x, y);
+    shooter(button1);
+    pneumatic(button3, button4);
+    elevator(button7, button8);
   }
 
   public void autoLoop() {
     // autonomous loop
     xAng = tx.getDouble(0.0);
-    area = ta.getDouble(0.0);
     
     while(xAng != 0) {
       if(xAng > 0) {
@@ -208,24 +134,99 @@ public class Robot extends TimedRobot {
 
     yAng = ty.getDouble(0.0);
     while(yAng != 0) {
-      if(yAng > 0) {
+      if(yAng > -3) {
         //move back
-        leftFront.set(ControlMode.PercentOutput, -0.2);
-        leftBack.set(ControlMode.PercentOutput, -0.2);
-        rightFront.set(ControlMode.PercentOutput, 0.2);
-        rightBack.set(ControlMode.PercentOutput, 0.2);
-      } else if (yAng < 0) {
+        leftFront.set(ControlMode.PercentOutput, -0.4);
+        leftBack.set(ControlMode.PercentOutput, -0.4);
+        rightFront.set(ControlMode.PercentOutput, 0.4);
+        rightBack.set(ControlMode.PercentOutput, 0.4);
+      } else if (yAng < 3) {
         //move forwards
-        leftFront.set(ControlMode.PercentOutput, 0.2);
-        leftBack.set(ControlMode.PercentOutput, 0.2);
-        rightFront.set(ControlMode.PercentOutput, -0.2);
-        rightBack.set(ControlMode.PercentOutput, -0.2);
+        leftFront.set(ControlMode.PercentOutput, 0.4);
+        leftBack.set(ControlMode.PercentOutput, 0.4);
+        rightFront.set(ControlMode.PercentOutput, -0.4);
+        rightBack.set(ControlMode.PercentOutput, -0.4);
       }
       yAng = ty.getDouble(0.0);
     }
     
     shooterLeft.set(-1);
     shooterRight.set(1);
+  }
+
+  public void drive(double x, double y){
+
+    // double leftTotal = x + y;
+    // double rightTotal = -x-y;
+    leftFront.set(ControlMode.PercentOutput, x);
+    leftBack.set(ControlMode.PercentOutput, x);
+    rightFront.set(ControlMode.PercentOutput, -y);
+    rightBack.set(ControlMode.PercentOutput, -y);
+
+    // leftFront.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, y);
+    // leftBack.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, y);
+    // rightFront.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, -y);
+    // rightBack.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, -y);
+
+    System.out.println(x + "                           " + y);
+    
+  }
+
+  public void shooter(boolean shoot){
+    if(shoot) {
+      shooterLeft.set(1);
+      shooterRight.set(-1);
+    }else{
+      shooterLeft.set(0);
+      shooterRight.set(0);
+    }
+  }
+
+  public void pneumatic(boolean out, boolean in){
+     if(out) {
+      // shoot out
+      intakeDouble.set(Value.kForward);
+    }else if(in) {
+      // take it back in
+      intakeDouble.set(Value.kReverse);
+    }else {
+      intakeDouble.set(Value.kOff);
+    }
+  }
+
+  public void elevator(boolean up, boolean down){
+    if(up){
+      System.out.println("Button 7 Pressed");
+      elevator.set(0.5);
+    }else if(down){
+      System.out.println("Button 8 Pressed");
+      elevator.set(-0.5);
+    }else{
+      elevator.set(0);
+    }
+  }
+
+  public void initialSettings(){ 
+    button1 = joystick.getRawButton(1);
+    button2 = joystick.getRawButton(2);
+    button3 = joystick.getRawButton(3);
+    button4 = joystick.getRawButton(4);
+    button5 = joystick.getRawButton(5);
+    button6 = joystick.getRawButton(6);
+    button7 = joystick.getRawButton(7);
+    button8 = joystick.getRawButton(8);
+    button10 = joystick.getRawButton(10);
+    button11 = joystick.getRawButton(11);
+    button12 = joystick.getRawButton(12);
+
+    x = -xbox.getY(Hand.kLeft);
+    y = -xbox.getY(Hand.kRight);
+
+    x *= 0.6;
+    y *= 0.6;
+
+    xAng = tx.getDouble(0.0);
+    yAng = ty.getDouble(0.0);
   }
 
   @Override
