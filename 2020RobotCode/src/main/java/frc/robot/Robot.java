@@ -68,8 +68,8 @@ public class Robot extends TimedRobot {
 
   CANSparkMax elevator = new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless);
 
-  CANSparkMax shooterLeft = new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless);
-  CANSparkMax shooterRight = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless);
+  CANSparkMax shooterLeft = new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushed);
+  CANSparkMax shooterRight = new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushed);
 
   // pneumatics 
   Compressor compress = new Compressor(0);
@@ -114,38 +114,43 @@ public class Robot extends TimedRobot {
   public void autoLoop() {
     // autonomous loop
     xAng = tx.getDouble(0.0);
-    
-    while(xAng != 0) {
+    double turnSpeed = 0.2;
+    double forwardSpeed = 0.4;
+    while(true) {
       if(xAng > 0) {
         //turn right
-        leftFront.set(ControlMode.PercentOutput, 0.2);
-        leftBack.set(ControlMode.PercentOutput, 0.2);
-        rightFront.set(ControlMode.PercentOutput, 0.2);
-        rightBack.set(ControlMode.PercentOutput, 0.2);
+        leftFront.set(ControlMode.PercentOutput, turnSpeed);
+        leftBack.set(ControlMode.PercentOutput, turnSpeed);
+        rightFront.set(ControlMode.PercentOutput, turnSpeed);
+        rightBack.set(ControlMode.PercentOutput, turnSpeed);
       } else if (xAng < 0) {
         //turn left
-        leftFront.set(ControlMode.PercentOutput, -0.2);
-        leftBack.set(ControlMode.PercentOutput, -0.2);
-        rightFront.set(ControlMode.PercentOutput, -0.2);
-        rightBack.set(ControlMode.PercentOutput, -0.2);
+        leftFront.set(ControlMode.PercentOutput, -turnSpeed);
+        leftBack.set(ControlMode.PercentOutput, -turnSpeed);
+        rightFront.set(ControlMode.PercentOutput, -turnSpeed);
+        rightBack.set(ControlMode.PercentOutput, -turnSpeed);
+      }else{
+        break;
       }
       xAng = tx.getDouble(0.0);
     }
 
-    yAng = ty.getDouble(0.0);
-    while(yAng != 0) {
-      if(yAng > -3) {
+      yAng = ty.getDouble(0.0);
+    while(true) {
+      if(yAng > 3) {
         //move back
-        leftFront.set(ControlMode.PercentOutput, -0.4);
-        leftBack.set(ControlMode.PercentOutput, -0.4);
-        rightFront.set(ControlMode.PercentOutput, 0.4);
-        rightBack.set(ControlMode.PercentOutput, 0.4);
-      } else if (yAng < 3) {
-        //move forwards
-        leftFront.set(ControlMode.PercentOutput, 0.4);
-        leftBack.set(ControlMode.PercentOutput, 0.4);
-        rightFront.set(ControlMode.PercentOutput, -0.4);
-        rightBack.set(ControlMode.PercentOutput, -0.4);
+        leftFront.set(ControlMode.PercentOutput, -forwardSpeed);
+        leftBack.set(ControlMode.PercentOutput, -forwardSpeed);
+        rightFront.set(ControlMode.PercentOutput, forwardSpeed);
+        rightBack.set(ControlMode.PercentOutput, forwardSpeed);
+      } else if (yAng < -3) {
+        //move forward
+        leftFront.set(ControlMode.PercentOutput, forwardSpeed);
+        leftBack.set(ControlMode.PercentOutput, forwardSpeed);
+        rightFront.set(ControlMode.PercentOutput, -forwardSpeed);
+        rightBack.set(ControlMode.PercentOutput, -forwardSpeed);
+      }else{
+        break;
       }
       yAng = ty.getDouble(0.0);
     }
@@ -155,27 +160,19 @@ public class Robot extends TimedRobot {
   }
 
   public void drive(double x, double y){
+    double leftTotal = x + y;
+    double rightTotal = x - y;
 
-    // double leftTotal = x + y;
-    // double rightTotal = -x-y;
-    leftFront.set(ControlMode.PercentOutput, x);
-    leftBack.set(ControlMode.PercentOutput, x);
-    rightFront.set(ControlMode.PercentOutput, -y);
-    rightBack.set(ControlMode.PercentOutput, -y);
-
-    // leftFront.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, y);
-    // leftBack.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, y);
-    // rightFront.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, -y);
-    // rightBack.set(ControlMode.PercentOutput, x, DemandType.ArbitraryFeedForward, -y);
-
-    System.out.println(x + "                           " + y);
-    
+    leftFront.set(ControlMode.PercentOutput, leftTotal);
+    leftBack.set(ControlMode.PercentOutput, leftTotal);
+    rightFront.set(ControlMode.PercentOutput, rightTotal);
+    rightBack.set(ControlMode.PercentOutput, rightTotal);
   }
 
   public void shooter(boolean shoot){
     if(shoot) {
-      shooterLeft.set(1);
-      shooterRight.set(-1);
+      shooterLeft.set(0.75);
+      shooterRight.set(-0.75);
     }else{
       shooterLeft.set(0);
       shooterRight.set(0);
@@ -196,11 +193,9 @@ public class Robot extends TimedRobot {
 
   public void elevator(boolean up, boolean down){
     if(up){
-      System.out.println("Button 7 Pressed");
-      elevator.set(0.5);
+      elevator.set(1);
     }else if(down){
-      System.out.println("Button 8 Pressed");
-      elevator.set(-0.5);
+      elevator.set(-1);
     }else{
       elevator.set(0);
     }
@@ -219,11 +214,8 @@ public class Robot extends TimedRobot {
     button11 = joystick.getRawButton(11);
     button12 = joystick.getRawButton(12);
 
-    x = -xbox.getY(Hand.kLeft);
-    y = -xbox.getY(Hand.kRight);
-
-    x *= 0.6;
-    y *= 0.6;
+    x = joystick.getX()*0.3;
+    y = -joystick.getY()*0.8;
 
     xAng = tx.getDouble(0.0);
     yAng = ty.getDouble(0.0);
