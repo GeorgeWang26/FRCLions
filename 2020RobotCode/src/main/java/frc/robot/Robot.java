@@ -30,8 +30,8 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     io.updateInput();
     control.drive(io.getX(), io.getY());
-    control.intake(io.getButton(11));
-    control.belt(io.getButton(5), io.getButton(6));
+    control.intake(io.getButton(11), io.getButton(12));
+    control.belt(io.getButton(2));
     control.shooter(io.getButton(1));
     control.pneumatic(io.getButton(3), io.getButton(4));
     control.elevator(io.getButton(7), io.getButton(8));

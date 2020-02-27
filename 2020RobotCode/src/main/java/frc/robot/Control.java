@@ -17,16 +17,18 @@ public class Control {
     private TalonFX rightBack = new TalonFX(4);
 
     // private CANSparkMax elevator = new CANSparkMax(1, MotorType.kBrushless);
-    private CANSparkMax elevator = new CANSparkMax(6, MotorType.kBrushed);
+    private CANSparkMax elevator = new CANSparkMax(1, MotorType.kBrushless);
 
 
-    private CANSparkMax shooterLeft = new CANSparkMax(2, MotorType.kBrushed);
-    private CANSparkMax shooterRight = new CANSparkMax(3, MotorType.kBrushed);
+    //private CANSparkMax shooterTop = new CANSparkMax(2, MotorType.kBrushed);
+    private TalonSRX shooterTop = new TalonSRX(5);
+    private CANSparkMax shooterBot = new CANSparkMax(2, MotorType.kBrushed);
 
     // private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushless);
-    private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushless);
-
-    private TalonSRX belt = new TalonSRX(5);
+    //private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushed);
+    private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushed);
+    
+    private CANSparkMax beltDrive = new CANSparkMax(3, MotorType.kBrushed);
     // private CANSparkMax beltSpark = new CANSparkMax(1, MotorType.kBrushed);
     // private CANSparkMax beltSpark2 = new CANSparkMax(4, MotorType.kBrushed);
 
@@ -45,24 +47,26 @@ public class Control {
         rightBack.set(ControlMode.PercentOutput, rightTotal);
     }
 
-    public void intake(boolean roll){
-        if(roll){
-            intake.set(-1);
-        }else{
+    public void intake(boolean roll, boolean rollOut) {
+        if (roll) {
+            intake.set(-0.35);
+        } else if (rollOut) {
+            intake.set(0.35);
+        } else {
             intake.set(0);
         }
     }
 
     public void shooter(boolean shoot) {
         if (shoot) {
-            shooterLeft.set(0.75);
-            shooterRight.set(-0.75);
+            shooterTop.set(ControlMode.PercentOutput, 0.9);
+            shooterBot.set(-1);
         } else {
-            shooterLeft.set(0);
-            shooterRight.set(0);
+            shooterTop.set(ControlMode.PercentOutput, 0);
+            shooterBot.set(0);
         }
     }
-
+    
     public void pneumatic(boolean out, boolean in) {
         if (out) {
             // shoot out
@@ -85,18 +89,11 @@ public class Control {
         }
     }
 
-    public void belt(boolean move, boolean reverse){
-        if(move){
-            belt.set(ControlMode.PercentOutput, 1);
-            elevator.set(-1);
-            intake.set(-0.35);
-        }
-        else if(reverse){
-            intake.set(0.35);
-        }else{
-            belt.set(ControlMode.PercentOutput, 0);
-            elevator.set(0);
-            intake.set(0);
+    public void belt(boolean move) {
+        if (move) {
+            beltDrive.set(0.35);
+        } else {
+            beltDrive.set(0);
         }
     }
 }
