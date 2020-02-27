@@ -12,11 +12,11 @@ public class Autonomous {
 
     public void startAuto() {
         while (true) {
-            io.initX();
-            if (io.xAng > 0) {
+            io.updateLimelight();
+            if (io.getLimeX() > 0) {
                 // turn right
                 control.drive(0.2, 0);
-            } else if (io.xAng < 0) {
+            } else if (io.getLimeX() < 0) {
                 // turn left
                 control.drive(-0.2, 0);
             } else {
@@ -25,11 +25,11 @@ public class Autonomous {
         }
 
         while (true) {
-            io.initY();
-            if (io.yAng > 3) {
+            io.updateLimelight();
+            if (io.getLimeY() > 3) {
                 // move back
                 control.drive(0, -0.4);
-            } else if (io.yAng < -3) {
+            } else if (io.getLimeY() < -3) {
                 // move forward
                 control.drive(0, 0.4);
             } else {

@@ -8,62 +8,71 @@ import edu.wpi.first.wpilibj.Joystick;
 
 public class IO {
 
-    Joystick joystick = new Joystick(0);
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-    CameraServer camServer = CameraServer.getInstance();
+    private Joystick joystick = new Joystick(0);
+    private NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+    private CameraServer camServer = CameraServer.getInstance();
 
-    NetworkTableEntry tx = table.getEntry("tx");
-    NetworkTableEntry ty = table.getEntry("ty");
+    private NetworkTableEntry tx = table.getEntry("tx");
+    private NetworkTableEntry ty = table.getEntry("ty");
     // NetworkTableEntry ta = table.getEntry("ta");
 
-    double x;
-    double y;
-
-    boolean button1;
-    boolean button2;
-    boolean button3;
-    boolean button4;
-    boolean button5;
-    boolean button6;
-    boolean button7;
-    boolean button8;
-    boolean button10;
-    boolean button11;
-    boolean button12;
-
-    double xAng;
-    double yAng;
+    private double x, y;
+    private boolean[] buttons = new boolean[13];
+    private double xAng, yAng;
 
     public void initCamera() {
+
+
         camServer.startAutomaticCapture(0);
     }
 
-    public void initialSettings() {
-        button1 = joystick.getRawButton(1);
-        button2 = joystick.getRawButton(2);
-        button3 = joystick.getRawButton(3);
-        button4 = joystick.getRawButton(4);
-        button5 = joystick.getRawButton(5);
-        button6 = joystick.getRawButton(6);
-        button7 = joystick.getRawButton(7);
-        button8 = joystick.getRawButton(8);
-        button10 = joystick.getRawButton(10);
-        button11 = joystick.getRawButton(11);
-        button12 = joystick.getRawButton(12);
+    public void updateInput() {
+        for(int i = 1; i < 13; i++){
+            buttons[i] = joystick.getRawButton(i);
+        }
+        x = joystick.getX();
+        y = -joystick.getY();
 
-        x = joystick.getX() * 0.3;
-        y = -joystick.getY() * 0.8;
+        if(x < 0.1 || x > -0.1){
+            x = 0;
+        }
+        if(y < 0.1 || y > -0.1){
+            y = 0;
+        }
+        
+        x *= 0.3;
+        y *= 0.8;
 
-        initX();
-        initY();
+        updateLimelight();
     }
 
-    public void initX() {
+    public void updateLimelight() {
         xAng = tx.getDouble(0.0);
+        yAng = ty.getDouble(0.0);
     }
 
-    public void initY() {
-        yAng = ty.getDouble(0.0);
+    // public void initY() {
+    //     yAng = ty.getDouble(0.0);
+    // }
+
+    public boolean getButton(int buttonNum){
+        return buttons[buttonNum];
+    }
+
+    public double getX(){
+        return x;
+    }
+
+    public double getY(){
+        return y;
+    }
+
+    public double getLimeX(){
+        return xAng;
+    }
+
+    public double getLimeY(){
+        return yAng;
     }
 
 }

@@ -28,11 +28,13 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    io.initialSettings();
-    control.drive(io.x, io.y);
-    control.shooter(io.button1);
-    control.pneumatic(io.button3, io.button4);
-    control.elevator(io.button7, io.button8);
+    io.updateInput();
+    control.drive(io.getX(), io.getY());
+    control.intake(io.getButton(11));
+    control.belt(io.getButton(5), io.getButton(6));
+    control.shooter(io.getButton(1));
+    control.pneumatic(io.getButton(3), io.getButton(4));
+    control.elevator(io.getButton(7), io.getButton(8));
   }
 
 }
