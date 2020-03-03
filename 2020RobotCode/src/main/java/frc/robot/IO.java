@@ -33,12 +33,14 @@ public class IO {
         x = joystick.getX();
         y = -joystick.getY();
 
-        if(x < 0.1 || x > -0.1){
-            x = 0;
-        }
-        if(y < 0.1 || y > -0.1){
-            y = 0;
-        }
+        // System.out.println("\n\n" + x + " " + y);
+
+        // if(x < 0.1 && x > -0.1){
+        //     x = 0;
+        // }
+        // if(y < 0.1 && y > -0.1){
+        //     y = 0;
+        // }
         
         x *= 0.3;
         y *= 0.8;

@@ -5,7 +5,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
@@ -16,30 +16,24 @@ public class Control {
     private TalonFX rightFront = new TalonFX(3);
     private TalonFX rightBack = new TalonFX(4);
 
-    // private CANSparkMax elevator = new CANSparkMax(1, MotorType.kBrushless);
+    private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushless);
+
+    private CANSparkMax beltDrive = new CANSparkMax(2, MotorType.kBrushed);
+    private TalonSRX shooterTop = new TalonSRX(5);
+    private CANSparkMax shooterBot = new CANSparkMax(3, MotorType.kBrushed);
+    
+    DigitalInput upLimit = new DigitalInput(1);
+    DigitalInput downLimit = new DigitalInput(0);
     private CANSparkMax elevator = new CANSparkMax(1, MotorType.kBrushless);
 
+    private DoubleSolenoid intakeDoubleRight = new DoubleSolenoid(6, 7);
+    private DoubleSolenoid intakeDoubleLeft = new DoubleSolenoid(1, 0);
 
-    //private CANSparkMax shooterTop = new CANSparkMax(2, MotorType.kBrushed);
-    private TalonSRX shooterTop = new TalonSRX(5);
-    private CANSparkMax shooterBot = new CANSparkMax(2, MotorType.kBrushed);
-
-    // private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushless);
-    //private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushed);
-    private CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushed);
-    
-    private CANSparkMax beltDrive = new CANSparkMax(3, MotorType.kBrushed);
-    // private CANSparkMax beltSpark = new CANSparkMax(1, MotorType.kBrushed);
-    // private CANSparkMax beltSpark2 = new CANSparkMax(4, MotorType.kBrushed);
-
-
-    // try to get rid of the line below
-    // private Compressor compress = new Compressor(0);
-    private DoubleSolenoid intakeDouble = new DoubleSolenoid(0, 1);
 
     public void drive(double x, double y) {
         double leftTotal = x + y;
         double rightTotal = x - y;
+        // System.out.println(x + " " + y);
 
         leftFront.set(ControlMode.PercentOutput, leftTotal);
         leftBack.set(ControlMode.PercentOutput, leftTotal);
@@ -49,9 +43,9 @@ public class Control {
 
     public void intake(boolean roll, boolean rollOut) {
         if (roll) {
-            intake.set(-0.35);
+            intake.set(-0.5);
         } else if (rollOut) {
-            intake.set(0.35);
+            intake.set(0.5);
         } else {
             intake.set(0);
         }
@@ -59,41 +53,56 @@ public class Control {
 
     public void shooter(boolean shoot) {
         if (shoot) {
-            shooterTop.set(ControlMode.PercentOutput, 0.9);
-            shooterBot.set(-1);
+            shooterTop.set(ControlMode.PercentOutput,-0.65);
+            shooterBot.set(0.65);
+            beltDrive.set(-0.5);
         } else {
             shooterTop.set(ControlMode.PercentOutput, 0);
             shooterBot.set(0);
+            beltDrive.set(0);
         }
     }
     
     public void pneumatic(boolean out, boolean in) {
         if (out) {
             // shoot out
-            intakeDouble.set(Value.kForward);
+            System.out.println("shoot out");
+            intakeDoubleLeft.set(Value.kForward);
+            intakeDoubleRight.set(Value.kForward);
         } else if (in) {
             // take it back in
-            intakeDouble.set(Value.kReverse);
+            System.out.println("back in");
+            intakeDoubleLeft.set(Value.kReverse);
+            intakeDoubleRight.set(Value.kReverse);
         } else {
-            intakeDouble.set(Value.kOff);
+            intakeDoubleLeft.set(Value.kOff);
+            intakeDoubleRight.set(Value.kOff);
         }
     }
 
     public void elevator(boolean up, boolean down) {
-        if (up) {
-            elevator.set(-0.75);
-        } else if (down) {
-            elevator.set(0.75);
-        } else {
-            elevator.set(0);
-        }
-    }
 
-    public void belt(boolean move) {
-        if (move) {
-            beltDrive.set(0.35);
+        // System.out.println("uoLimit " + upLimit.get() + "   downLimit " + downLimit.get());
+        if (up) {
+            if(!upLimit.get()){
+                System.out.println("up break");
+                elevator.set(0);
+            }else{
+                //System.out.println("up");
+                elevator.set(-0.75);
+            }
+        } else if (down) {
+            if(!downLimit.get()){
+                System.out.println("down break");
+                elevator.set(0);
+            }else{
+                //System.out.println("down");
+                elevator.set(0.75);
+            }
         } else {
-            beltDrive.set(0);
+            // System.out.println("rest");
+            elevator.set(0); 
         }
     }
+    
 }
