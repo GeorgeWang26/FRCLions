@@ -2,8 +2,10 @@ package frc.robot;
 
 public class Autonomous {
 
-    IO io;
-    Control control;
+    private IO io;
+    private Control control;
+
+    // public boolean init = true;
 
     public Autonomous(IO io, Control control) {
         this.io = io;
@@ -11,6 +13,10 @@ public class Autonomous {
     }
 
     public void startAuto() {
+        // if(init){
+        //     control.pneumatic(true, false);
+        //     init = false;
+        // }
         while (true) {
             io.updateLimelight();
             if (io.getLimeX() > 0) {

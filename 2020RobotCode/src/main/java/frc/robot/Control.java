@@ -20,10 +20,10 @@ public class Control {
 
     private CANSparkMax beltDrive = new CANSparkMax(2, MotorType.kBrushed);
     private TalonSRX shooterTop = new TalonSRX(5);
-    private CANSparkMax shooterBot = new CANSparkMax(3, MotorType.kBrushed);
+    private TalonSRX shooterBot = new TalonSRX(6);
     
-    DigitalInput upLimit = new DigitalInput(1);
-    DigitalInput downLimit = new DigitalInput(0);
+    private DigitalInput upLimit = new DigitalInput(1);
+    private DigitalInput downLimit = new DigitalInput(0);
     private CANSparkMax elevator = new CANSparkMax(1, MotorType.kBrushless);
 
     private DoubleSolenoid intakeDoubleRight = new DoubleSolenoid(6, 7);
@@ -46,19 +46,19 @@ public class Control {
             intake.set(-0.5);
         } else if (rollOut) {
             intake.set(0.5);
-        } else {
+        } else {    
             intake.set(0);
         }
     }
 
     public void shooter(boolean shoot) {
         if (shoot) {
-            shooterTop.set(ControlMode.PercentOutput,-0.65);
-            shooterBot.set(0.65);
-            beltDrive.set(-0.5);
+            shooterTop.set(ControlMode.PercentOutput, -0.56);
+            shooterBot.set(ControlMode.PercentOutput, 0.56);
+            beltDrive.set(0.5);
         } else {
             shooterTop.set(ControlMode.PercentOutput, 0);
-            shooterBot.set(0);
+            shooterBot.set(ControlMode.PercentOutput, 0);
             beltDrive.set(0);
         }
     }

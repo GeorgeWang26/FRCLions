@@ -4,14 +4,16 @@ import edu.wpi.first.wpilibj.TimedRobot;
 
 public class Robot extends TimedRobot {
 
-  Control control = new Control();
-  IO io = new IO();
-  Autonomous autonomous = new Autonomous(io, control);
+  private Control control = new Control();
+  private IO io = new IO();
+  private Autonomous autonomous = new Autonomous(io, control);
 
   @Override
   public void robotInit() {
     io.initCamera();
-    control.pneumatic(true, false);
+    // System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nauto pneumatic out");
+    // control.pneumatic(true, false);
+    // System.out.println("done auto pneumatic");
   }
 
   @Override
@@ -20,6 +22,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    // autonomous.init = true;
+    control.pneumatic(true, false);
   }
 
   @Override
