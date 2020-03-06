@@ -41,8 +41,8 @@ public class Control {
         rightBack.set(ControlMode.PercentOutput, rightTotal);
     }
 
-    public void intake(boolean roll, boolean rollOut) {
-        if (roll) {
+    public void intake(boolean rollIn, boolean rollOut) {
+        if (rollIn) {
             intake.set(-0.5);
         } else if (rollOut) {
             intake.set(0.5);

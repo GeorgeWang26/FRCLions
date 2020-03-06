@@ -14,7 +14,6 @@ public class IO {
 
     private NetworkTableEntry tx = table.getEntry("tx");
     private NetworkTableEntry ty = table.getEntry("ty");
-    // NetworkTableEntry ta = table.getEntry("ta");
 
     private double x, y;
     private boolean[] buttons = new boolean[13];
@@ -52,10 +51,6 @@ public class IO {
         xAng = tx.getDouble(0.0);
         yAng = ty.getDouble(0.0);
     }
-
-    // public void initY() {
-    //     yAng = ty.getDouble(0.0);
-    // }
 
     public boolean getButton(int buttonNum){
         return buttons[buttonNum];

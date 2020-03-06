@@ -11,9 +11,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     io.initCamera();
-    // System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nauto pneumatic out");
-    // control.pneumatic(true, false);
-    // System.out.println("done auto pneumatic");
+
   }
 
   @Override
@@ -22,23 +20,28 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    // autonomous.init = true;
+    // pneumatic reach out
     control.pneumatic(true, false);
   }
 
   @Override
   public void autonomousPeriodic() {
-    autonomous.startAuto();
+    autonomous.autoLineup();
   }
 
   @Override
   public void teleopPeriodic() {
     io.updateInput();
+
+    while(io.getButton(1)){
+      autonomous.fakeAuto();
+    }
+
+    control.shooter(io.getButton(2));
     control.drive(io.getX(), io.getY());
-    control.intake(io.getButton(11), io.getButton(12));
-    control.shooter(io.getButton(1));
-    control.pneumatic(io.getButton(3), io.getButton(4));
-    control.elevator(io.getButton(8), io.getButton(7));
+    control.intake(io.getButton(3), io.getButton(4));
+    control.pneumatic(io.getButton(5), io.getButton(6));
+    control.elevator(io.getButton(7), io.getButton(8));
   }
 
 }
