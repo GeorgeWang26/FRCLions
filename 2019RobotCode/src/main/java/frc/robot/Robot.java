@@ -1,0 +1,386 @@
+
+package frc.robot;
+
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Joystick;
+
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.can.*;
+import com.ctre.phoenix.motorcontrol.DemandType;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.DigitalInput;
+
+public class Robot extends TimedRobot {
+	/** Hardware */
+	TalonSRX _elevator = new TalonSRX(5);
+	TalonSRX _hatch = new TalonSRX(6);
+	TalonSRX _intake = new TalonSRX(7);
+	Joystick _joy = new Joystick(0);
+	Joystick _gamepad = new Joystick(1);
+
+	DigitalInput hatchLimitF = new DigitalInput(0);
+	DigitalInput hatchLimitB = new DigitalInput(1);
+
+	WPI_VictorSPX _leftMasterFront = new WPI_VictorSPX(3);
+	WPI_VictorSPX _leftMasterBack = new WPI_VictorSPX(4);
+
+	WPI_VictorSPX _rightMasterFront = new WPI_VictorSPX(1);
+	WPI_VictorSPX _rightMasterBack = new WPI_VictorSPX(2);
+
+	/** Used to create string thoughout loop */
+	StringBuilder _sb = new StringBuilder();
+	int _loops = 0;
+
+	/** Track button state for single press event */
+	boolean _lastButton1 = false;
+
+	/** Save the target position to servo to */
+	double targetPositionRotations;
+
+	edu.wpi.first.cameraserver.CameraServer server, server2;
+
+	NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+	NetworkTableEntry tx = table.getEntry("tx");
+	NetworkTableEntry ty = table.getEntry("ty");
+	NetworkTableEntry ta = table.getEntry("ta");
+
+	double xAng;
+	double yAng;
+	double area;
+
+	XboxController xbox = new XboxController(3);
+
+	public void robotInit() {
+		/* Config the sensor used for Primary PID and sensor direction */
+		_elevator.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
+
+		/* Ensure sensor is positive when output is positive */
+		_elevator.setSensorPhase(Constants.kSensorPhase);
+
+		/**
+		 * Set based on what direction you want forward/positive to be. This does not
+		 * affect sensor phase.
+		 */
+		_elevator.setInverted(Constants.kMotorInvert);
+
+		/* Config the peak and nominal outputs, 12V means full */
+		_elevator.configNominalOutputForward(0, Constants.kTimeoutMs);
+		_elevator.configNominalOutputReverse(0, Constants.kTimeoutMs);
+		_elevator.configPeakOutputForward(1, Constants.kTimeoutMs);
+		_elevator.configPeakOutputReverse(-1, Constants.kTimeoutMs);
+
+		/**
+		 * Config the allowable closed-loop error, Closed-Loop output will be neutral
+		 * within this range. See Table in Section 17.2.1 for native units per rotation.
+		 */
+		_elevator.configAllowableClosedloopError(0, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
+
+		/* Config Position Closed Loop gains in slot0, tsypically kF stays zero. */
+		_elevator.config_kF(Constants.kPIDLoopIdx, Constants.kGains.kF, Constants.kTimeoutMs);
+		_elevator.config_kP(Constants.kPIDLoopIdx, Constants.kGains.kP, Constants.kTimeoutMs);
+		_elevator.config_kI(Constants.kPIDLoopIdx, Constants.kGains.kI, Constants.kTimeoutMs);
+		_elevator.config_kD(Constants.kPIDLoopIdx, Constants.kGains.kD, Constants.kTimeoutMs);
+
+		/**
+		 * Grab the 360 degree position of the MagEncoder's absolute position, and
+		 * intitally set the relative sensor to match.
+		 */
+		int absolutePosition = _elevator.getSensorCollection().getPulseWidthPosition();
+
+		/* Mask out overflows, keep bottom 12 bits */
+		absolutePosition &= 0xFFF;
+		if (Constants.kSensorPhase) {
+			absolutePosition *= -1;
+		}
+		if (Constants.kMotorInvert) {
+			absolutePosition *= -1;
+		}
+
+		/* Set the quadrature (relative) sensor to match absolute */
+		_elevator.setSelectedSensorPosition(absolutePosition, Constants.kPIDLoopIdx, Constants.kTimeoutMs);
+		_elevator.getSensorCollection().setQuadraturePosition(0, 30);
+
+		cameraInit();
+
+	}
+
+	void commonLoop() {
+		/* Gamepad processing */
+
+		if (hatchLimitB.get()) {
+			System.out.println("B");
+			System.out.println(hatchLimitB.get());
+		}
+
+		// if(hatchLimitF.get()) {
+		// System.out.println("F");
+		// System.out.println(hatchLimitF.get());
+		// }
+
+		double turn = _joy.getX() / 1.5;
+		double forward = -1 * _joy.getY() / 1.5;
+
+		double x = _joy.getX() * 0.3;
+		double y = -_joy.getY() * 0.8;
+
+		//  double x = -xbox.getY(Hand.kLeft)*0.6;
+		//  double y = -xbox.getY(Hand.kRight)*0.6;
+
+		boolean button2 = _joy.getRawButton(2);
+		boolean button3 = _joy.getRawButton(3);
+		boolean button4 = _joy.getRawButton(4);
+		boolean button5 = _joy.getRawButton(5);
+		boolean button6 = _joy.getRawButton(6);
+		boolean button7 = _joy.getRawButton(7);
+		boolean button8 = _joy.getRawButton(8);
+		boolean button9 = _joy.getRawButton(9);
+		boolean button10 = _joy.getRawButton(10);
+		boolean button11 = _joy.getRawButton(11);
+		boolean button12 = _joy.getRawButton(12);
+
+		boolean game_button1 = _gamepad.getRawButton(1);
+		boolean game_button2 = _gamepad.getRawButton(2);
+		boolean game_button3 = _gamepad.getRawButton(3);
+		boolean game_button4 = _gamepad.getRawButton(4);
+		boolean game_button5 = _gamepad.getRawButton(5);
+		boolean game_button6 = _gamepad.getRawButton(6);
+		boolean game_button7 = _gamepad.getRawButton(7);
+		boolean game_button8 = _gamepad.getRawButton(8);
+
+		/* Get Talon/Victor's current output percentage */
+		double motorOutput = _elevator.getMotorOutputPercent();
+
+		int tick = -1 * _elevator.getSelectedSensorPosition();
+
+		System.out.println(tick);
+
+		xAng = tx.getDouble(0.0);
+		yAng = ty.getDouble(0.0);
+		area = ta.getDouble(0.0);
+
+		System.out.println(xAng + " " + yAng + " " + area);
+
+		/* Deadband gamepad */
+		if (Math.abs(forward) < 0.10) {
+			/* Within 10% of zero */
+			forward = 0;
+		}
+
+		/* Prepare line to print */
+		_sb.append("\tout:");
+		/* Cast to int to remove decimal places */
+		_sb.append((int) (motorOutput * 100));
+		_sb.append("%"); // Percent
+
+		_sb.append("\tpos:");
+		_sb.append(_elevator.getSelectedSensorPosition(0));
+		_sb.append("u"); // Native units
+
+		if (game_button8) {
+			// Second Cargo ball
+			targetPositionRotations = -4100;
+			_elevator.set(ControlMode.Position, targetPositionRotations);
+		}
+		if (game_button6) {
+			// First Cargo ball
+			targetPositionRotations = -1600;
+			_elevator.set(ControlMode.Position, targetPositionRotations);
+		}
+
+		if (game_button5) {
+			System.out.println("button5");
+			// First Cargo Hatch
+			targetPositionRotations = -540;
+			_elevator.set(ControlMode.Position, targetPositionRotations);
+		}
+		if (game_button7) {
+			// Second Cargo hatch
+			targetPositionRotations = -2920;
+			_elevator.set(ControlMode.Position, targetPositionRotations);
+		}
+
+		if (game_button4) {
+			// Sets location to 0.
+			_elevator.set(ControlMode.PercentOutput, 0);
+		}
+
+		if (game_button3) {
+			// Remain at current position
+			targetPositionRotations = _elevator.getSelectedSensorPosition(0);
+			_elevator.set(ControlMode.Position, targetPositionRotations);
+		}
+
+		if (game_button1) {
+			// target hatch level two
+			targetPositionRotations = 0;
+			_elevator.set(ControlMode.PercentOutput, -0.45);
+		}
+
+		if (game_button2) {
+			// target hatch level three
+			targetPositionRotations = 0;
+			_elevator.set(ControlMode.PercentOutput, 0.05);
+		}
+
+		/* If Talon is in position closed-loop, print some more info */
+		if (_elevator.getControlMode() == ControlMode.Position) {
+			/* ppend more signals to print when in speed mode. */
+			_sb.append("\terr:");
+			_sb.append(_elevator.getClosedLoopError(0));
+			_sb.append("u"); // Native Units
+
+			_sb.append("\ttrg:");
+			_sb.append(targetPositionRotations);
+			_sb.append("u"); // Native Units
+		}
+
+		/**
+		 * Print every ten loops, printing too much too fast is generally bad for
+		 * performance.
+		 */
+		if (++_loops >= 10) {
+			_loops = 0;
+			System.out.println(_sb.toString());
+		}
+
+		/* Reset built string for next loop */
+		_sb.setLength(0);
+
+		double leftTotal = x + y;
+		double rightTotal = x - y;
+		_leftMasterFront.set(ControlMode.PercentOutput, leftTotal);
+		_leftMasterBack.set(ControlMode.PercentOutput, leftTotal);
+		_rightMasterFront.set(ControlMode.PercentOutput, rightTotal);
+		_rightMasterBack.set(ControlMode.PercentOutput, rightTotal);
+
+		if (button4) {
+			_intake.set(ControlMode.PercentOutput, 1);
+		} // Spins intake mechinism outwards
+		else if (button3) {
+			_intake.set(ControlMode.PercentOutput, -1);
+		} // Spins intake mechinism inwards
+		else {
+			_intake.set(ControlMode.PercentOutput, 0);
+		} // Stops intake mechinism motor
+
+		if (button6 && hatchLimitF.get() == true) {
+			_hatch.set(ControlMode.PercentOutput, .4);
+		} // Puts harch arm up
+
+		else if (button5 && hatchLimitB.get() == true) {
+			_hatch.set(ControlMode.PercentOutput, -.4);
+		} // Puts hatch arm down
+		else {
+			_hatch.set(ControlMode.PercentOutput, 0);
+		} // Stops hatch arm
+
+		// cameraInit();
+	}
+
+	/**
+	 * This function is called periodically during operator control
+	 */
+	public void teleopPeriodic() {
+		commonLoop();
+		System.out.println("angle " + yAng);
+		getHorizontalDistance();
+		getDirectDistance();
+	}
+
+	public void cameraInit() {
+		server = edu.wpi.first.cameraserver.CameraServer.getInstance();
+		server.startAutomaticCapture(0);
+		server2 = edu.wpi.first.cameraserver.CameraServer.getInstance();
+		server2.startAutomaticCapture(1);
+	}
+
+	public void autonomousPeriodic() {
+		autoLoop();
+	}
+
+	public void autoLoop() {
+		// autonomous loop
+		xAng = tx.getDouble(0.0);
+		area = ta.getDouble(0.0);
+		double Xincrement = 0.125;
+		double Yincrement = 0.3;
+		double xRange = 2.5;
+		double yRange = 8;
+
+		// Stopwatch
+		long startTime = System.currentTimeMillis();
+		long endTime;
+
+		while (true) {
+			if (xAng > xRange) {
+				// turn right
+				_leftMasterFront.set(ControlMode.PercentOutput, Xincrement);
+				_leftMasterBack.set(ControlMode.PercentOutput, Xincrement);
+				_rightMasterFront.set(ControlMode.PercentOutput, Xincrement);
+				_rightMasterBack.set(ControlMode.PercentOutput, Xincrement);
+			} else if (xAng < -xRange) {
+				// turn left
+				_leftMasterFront.set(ControlMode.PercentOutput, -Xincrement);
+				_leftMasterBack.set(ControlMode.PercentOutput, -Xincrement);
+				_rightMasterFront.set(ControlMode.PercentOutput, -Xincrement);
+				_rightMasterBack.set(ControlMode.PercentOutput, -Xincrement);
+			}else{
+				_leftMasterFront.set(ControlMode.PercentOutput, 0);
+				_leftMasterBack.set(ControlMode.PercentOutput, 0);
+				_rightMasterFront.set(ControlMode.PercentOutput, 0);
+				_rightMasterBack.set(ControlMode.PercentOutput, 0);
+				break;
+			}
+			xAng = tx.getDouble(0.0);
+		}
+
+		yAng = ty.getDouble(0.0);
+		while (true) {
+			if (yAng > yRange) {
+				// move back
+				_leftMasterFront.set(ControlMode.PercentOutput, -Yincrement);
+				_leftMasterBack.set(ControlMode.PercentOutput, -Yincrement);
+				_rightMasterFront.set(ControlMode.PercentOutput, Yincrement);
+				_rightMasterBack.set(ControlMode.PercentOutput, Yincrement);
+			} else if (yAng < -yRange) {
+				// move forwards
+				_leftMasterFront.set(ControlMode.PercentOutput, Yincrement);
+				_leftMasterBack.set(ControlMode.PercentOutput, Yincrement);
+				_rightMasterFront.set(ControlMode.PercentOutput, -Yincrement);
+				_rightMasterBack.set(ControlMode.PercentOutput, -Yincrement);
+			}else{
+				_leftMasterFront.set(ControlMode.PercentOutput, 0);
+				_leftMasterBack.set(ControlMode.PercentOutput, 0);
+				_rightMasterFront.set(ControlMode.PercentOutput, 0);
+				_rightMasterBack.set(ControlMode.PercentOutput, 0);
+				break;
+			}
+			yAng = ty.getDouble(0.0);
+		}
+		getDirectDistance();
+		getHorizontalDistance();
+	}
+
+
+
+	public double getDirectDistance() {
+		double d = 204/Math.sin(70+yAng);
+		System.out.println("direct distance " + d);
+		return d;
+	  }
+	
+	  public double getHorizontalDistance() {
+		double d = 204/Math.tan(70+yAng);
+		System.out.println("horizontall distance " + d);
+		return d;
+	  }
+
+	//   4 meters
+
+}
