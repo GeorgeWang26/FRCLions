@@ -21,12 +21,11 @@ public class IO {
 
     public void initCamera() {
 
-
         camServer.startAutomaticCapture(0);
     }
 
     public void updateInput() {
-        for(int i = 1; i < 13; i++){
+        for (int i = 1; i < 13; i++) {
             buttons[i] = joystick.getRawButton(i);
         }
         x = joystick.getX();
@@ -35,12 +34,12 @@ public class IO {
         // System.out.println("\n\n" + x + " " + y);
 
         // if(x < 0.1 && x > -0.1){
-        //     x = 0;
+        // x = 0;
         // }
         // if(y < 0.1 && y > -0.1){
-        //     y = 0;
+        // y = 0;
         // }
-        
+
         x *= 0.3;
         y *= 0.8;
 
@@ -52,23 +51,23 @@ public class IO {
         yAng = ty.getDouble(0.0);
     }
 
-    public boolean getButton(int buttonNum){
+    public boolean getButton(int buttonNum) {
         return buttons[buttonNum];
     }
 
-    public double getX(){
+    public double getX() {
         return x;
     }
 
-    public double getY(){
+    public double getY() {
         return y;
     }
 
-    public double getLimeX(){
+    public double getLimeX() {
         return xAng;
     }
 
-    public double getLimeY(){
+    public double getLimeY() {
         return yAng;
     }
 
