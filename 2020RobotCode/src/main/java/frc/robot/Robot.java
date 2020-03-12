@@ -5,8 +5,10 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
 
     private IO io = new IO();
-    private Control control = new Control(io);
+    private Control control = new Control();
     private Autonomous autonomous = new Autonomous(io, control);
+    boolean startUp = true;
+    double startUpTime = System.currentTimeMillis();
 
     @Override
     public void robotInit() {
@@ -22,16 +24,21 @@ public class Robot extends TimedRobot {
     public void autonomousInit() {
         // pneumatic reach out
         control.pneumatic(true, false);
-
-        long time = System.currentTimeMillis();
-        while(System.currentTimeMillis() - time < 1000){
-            control.drive(0, 1);
-        }
+        startUp = true;
     }
 
     @Override
     public void autonomousPeriodic() {
         // System.out.println("auto loop");
+        if(startUp){
+            startUpTime = System.currentTimeMillis();
+            startUp = false;
+            return;
+        }
+        if(System.currentTimeMillis() - startUpTime < 800){
+            control.drive(0, -0.3);
+            return;
+        }
         autonomous.lineUp();
     }
 
@@ -58,29 +65,23 @@ public class Robot extends TimedRobot {
          * button 11 -- intake and belt in
          * button 12 -- intake and belt out
          */
-
-        // System.out.println("up limit (0)" + control.upLimit.get() + "  down limit (1)" + control.downLimit.get() + "  belt limit (2)"   + control.beltLimit.get());        
-        // if(control.beltLimit.get() == false){
-        //     System.out.println(control.beltLimit.get());
-        // }
         io.updateInput();
-        if(io.getButton(11)){
-            control.shooterSpeed += 10*io.getSlider();
-        }else{
-            control.shooterSpeed = 0.6;
-        }
+        // if(io.getButton(11)){
+        //     control.shooterSpeed += 10*io.getSlider();
+        // }else{
+        //     control.shooterSpeed = 0.6;
+        // }
 
-        // autonomous.complete = false;
-        while (io.getButton(1)) {
-            // System.out.println("button1 pressed");
+        if(io.getButton(1)){
             autonomous.lineUp();
-            io.updateInput();
+            return;
         }
-        
+        autonomous.complete = false;
+
         if(io.getButton(2)){
             control.shooter(true);
         } else if(io.getButton(12)){
-            control.lowPower(true);
+            // control.lowPower(true);
         }else{
             control.shooter(false);
             // disable the shooter and get for belt
@@ -94,7 +95,6 @@ public class Robot extends TimedRobot {
         control.pneumatic(io.getButton(5), io.getButton(6));
         control.elevator(io.getButton(7), io.getButton(8));
 
-        System.out.println("num " + io.joystick.getAxisCount() + "   0 " + io.joystick.getRawAxis(0) + "    1 " + io.joystick.getRawAxis(1) + "    2 " + io.joystick.getRawAxis(2) + "    3 " + io.joystick.getRawAxis(3));
     }
 
 }

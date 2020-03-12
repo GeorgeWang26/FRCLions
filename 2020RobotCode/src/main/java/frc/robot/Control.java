@@ -37,20 +37,11 @@ public class Control {
     private DoubleSolenoid intakeDoubleRight = new DoubleSolenoid(6, 7);
     private DoubleSolenoid intakeDoubleLeft = new DoubleSolenoid(0, 1);
 
-    // LEDS
-    // private CANSparkMax LED = new CANSparkMax(8, MotorType.kBrushed);
 
     private double shooterTime = System.currentTimeMillis();
     private double beltTime = System.currentTimeMillis();
     private boolean shooterOn = false;
 
-    public double shooterSpeed = 0.6;
-
-    private IO io;
-
-    public Control(IO io){
-        this.io = io;
-    }
 
     // public void drive(double x, double y, boolean nitroSpeed) {
     //     double leftTotal = x + y;
@@ -71,7 +62,6 @@ public class Control {
     public void drive(double x, double y) {
         double leftTotal = x + y;
         double rightTotal = x - y;
-        // System.out.println(x + " " + y);
 
         leftFront.set(ControlMode.PercentOutput, leftTotal);
         leftBack.set(ControlMode.PercentOutput, leftTotal);
@@ -79,19 +69,27 @@ public class Control {
         rightBack.set(ControlMode.PercentOutput, rightTotal);
     }
 
+    boolean beltToggle = false;
+
     public void intake(boolean rollIn, boolean rollOut){
         if (rollIn) {
             intake.set(-0.5);
             if (!beltLimit.get()){
-                beltTime = System.currentTimeMillis();
-
-                while (System.currentTimeMillis() - beltTime < 2000){
-                    io.updateInput();
-                    drive(io.getX(), io.getY());
-                    beltDrive.set(0.65);
+                // intake.set(0);
+                if(beltToggle == false){
+                    beltTime = System.currentTimeMillis();
+                    beltToggle = true;
                 }
 
-                beltDrive.set(0);
+                if (System.currentTimeMillis() - beltTime < 2500){
+                    beltDrive.set(0.90);
+                    System.out.println(System.currentTimeMillis() - beltTime);
+                }else{
+                    beltDrive.set(0);
+                }
+
+            }else{
+                beltToggle = false;
             }
         } else if (rollOut) {
             intake.set(0.2);
@@ -103,9 +101,7 @@ public class Control {
     public void belt(boolean up, boolean down) {
         if (up) {
             beltDrive.set(0.75);
-            // System.out.println("up");
         } else if(down){
-            // System.out.println("down");
             beltDrive.set(-0.6);
         } else {
             beltDrive.set(0);
@@ -114,30 +110,37 @@ public class Control {
 
     public void shooter(boolean shoot) {
         if (shoot) {
-            // LED.set(-0.87);
 
-            // reverse here
             if(!shooterOn){
-                shooterTime = System.currentTimeMillis();
+                // start up run once only 
                 shooterOn = true;
-                belt(false, true);
-                shooterBot.set(ControlMode.PercentOutput, 0.50);
-                // System.out.println("move down\n\n");
-            }else if ((System.currentTimeMillis() - shooterTime) < 800){
-                belt(false, true);
-                // System.out.println(System.currentTimeMillis() - shooterTime);
+                shooterTime = System.currentTimeMillis();
+                beltDrive.set(-0.6);
                 shooterBot.set(ControlMode.PercentOutput, 0.50);
                 return;
-            }
 
-            // shoot 
-            belt(true, false);
-            shooterTop.set(ControlMode.PercentOutput, -shooterSpeed);
-            shooterBot.set(ControlMode.PercentOutput, -shooterSpeed);
-            // should not need intake to go for autonomous 15s
-            intake.set(-0.5);
+            }else if ((System.currentTimeMillis() - shooterTime) < 800){
+                // 800 ms
+                beltDrive.set(-0.6);
+
+                if(System.currentTimeMillis() - shooterTime < 300){
+                    shooterBot.set(ControlMode.PercentOutput, 0.50);
+
+                }else{
+                    // shooter forward 500ms
+                    // both -0.55
+                    shooterTop.set(ControlMode.PercentOutput, -0.55);
+                    shooterBot.set(ControlMode.PercentOutput, -0.55);
+                }
+                return;
+            }            
+            
+            // after 800 ms
+            shooterTop.set(ControlMode.PercentOutput, -0.55);
+            shooterBot.set(ControlMode.PercentOutput, -0.55);
+            beltDrive.set(0.75);
+
         } else {
-            // LED.set(-0.35);
             shooterOn = false;
             shooterTop.set(ControlMode.PercentOutput, 0);
             shooterBot.set(ControlMode.PercentOutput, 0);
@@ -192,7 +195,7 @@ public class Control {
         if(spitOut){
             shooterTop.set(ControlMode.PercentOutput, -0.2);
             shooterBot.set(ControlMode.PercentOutput, -0.2);
-            belt(true, false);
+            beltDrive.set(0.75);
         }else{
             // this will be done under shooter() in Robot.java
             // shooterTop.set(ControlMode.PercentOutput, 0);
